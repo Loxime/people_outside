@@ -1,0 +1,30 @@
+@baseUrl = http://127.0.0.1:8080
+
+### 1. Créer un signalement valide — HTTP 201
+POST {{baseUrl}}/reports
+Content-Type: application/json
+Accept: application/json
+
+{
+  "latitude": 48.8566,
+  "longitude": 2.3522,
+  "placeType": "PARK",
+  "crowdLevel": 2
+}
+
+### 2. Rechercher les signalements du jour à Paris — HTTP 200
+# Avec le jeu SQL, deux signalements de démonstration sont proches.
+GET {{baseUrl}}/reports?latitude=48.8566&longitude=2.3522&radiusKm=10
+Accept: application/json
+
+### 3. Rechercher près du signalement éloigné — HTTP 200
+GET {{baseUrl}}/reports?latitude=49.0&longitude=3.0&radiusKm=1
+Accept: application/json
+
+### 4. Recherche sans résultat — HTTP 200 et []
+GET {{baseUrl}}/reports?latitude=0&longitude=0&radiusKm=1
+Accept: application/json
+
+### 5. Rayon maximal autorisé — HTTP 200
+GET {{baseUrl}}/reports?latitude=48.8566&longitude=2.3522&radiusKm=100
+Accept: application/json

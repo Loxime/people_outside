@@ -1,0 +1,71 @@
+@baseUrl = http://127.0.0.1:8080
+
+### 1. Latitude invalide — HTTP 400
+POST {{baseUrl}}/reports
+Content-Type: application/json
+
+{
+  "latitude": 91,
+  "longitude": 2.3522,
+  "placeType": "PARK",
+  "crowdLevel": 2
+}
+
+### 2. Affluence hors limites — HTTP 400
+POST {{baseUrl}}/reports
+Content-Type: application/json
+
+{
+  "latitude": 48.8566,
+  "longitude": 2.3522,
+  "placeType": "PARK",
+  "crowdLevel": 6
+}
+
+### 3. Affluence non entière — HTTP 400
+POST {{baseUrl}}/reports
+Content-Type: application/json
+
+{
+  "latitude": 48.8566,
+  "longitude": 2.3522,
+  "placeType": "PARK",
+  "crowdLevel": 2.5
+}
+
+### 4. Type de lieu inconnu — HTTP 400
+POST {{baseUrl}}/reports
+Content-Type: application/json
+
+{
+  "latitude": 48.8566,
+  "longitude": 2.3522,
+  "placeType": "UNKNOWN",
+  "crowdLevel": 2
+}
+
+### 5. Champ obligatoire absent — HTTP 400
+POST {{baseUrl}}/reports
+Content-Type: application/json
+
+{
+  "latitude": 48.8566,
+  "longitude": 2.3522,
+  "placeType": "PARK"
+}
+
+### 6. Rayon trop grand — HTTP 400
+GET {{baseUrl}}/reports?latitude=48.8566&longitude=2.3522&radiusKm=101
+Accept: application/json
+
+### 7. Rayon nul — HTTP 400
+GET {{baseUrl}}/reports?latitude=48.8566&longitude=2.3522&radiusKm=0
+Accept: application/json
+
+### 8. Paramètre manquant — HTTP 400
+GET {{baseUrl}}/reports?latitude=48.8566&longitude=2.3522
+Accept: application/json
+
+### 9. Coordonnée non numérique — HTTP 400
+GET {{baseUrl}}/reports?latitude=abc&longitude=2.3522&radiusKm=10
+Accept: application/json
