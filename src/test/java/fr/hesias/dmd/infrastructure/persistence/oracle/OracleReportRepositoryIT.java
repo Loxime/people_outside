@@ -1,5 +1,6 @@
 package fr.hesias.dmd.infrastructure.persistence.oracle;
 
+import fr.hesias.dmd.application.SearchReportsUseCase;
 import fr.hesias.dmd.application.port.out.ReportRepository;
 import fr.hesias.dmd.application.port.out.ReportSearchPort;
 import fr.hesias.dmd.domain.model.PlaceType;
@@ -8,11 +9,14 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneOffset;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -155,6 +159,125 @@ class OracleReportRepositoryIT {
         assertAll(
                 () -> assertTrue(ids.contains(first.id())),
                 () -> assertTrue(ids.contains(second.id()))
+        );
+    }
+
+
+    @Test
+    void shouldRejectReportWithAssignedId() {
+        Report report = new Report(
+                9999L,
+                48.8566,
+                2.3522,
+                PlaceType.PARK,
+                2,
+                Instant.parse("2035-11-22T12:00:00Z")
+        );
+
+        InvalidDataAccessApiUsageException exception = assertThrows(
+                InvalidDataAccessApiUsageException.class,
+                () -> repository.save(report)
+        );
+
+        assertInstanceOf(
+                IllegalArgumentException.class,
+                exception.getCause()
+        );
+        assertEquals(
+                "A new report must not have an ID",
+                exception.getCause().getMessage()
+        );
+    }
+
+    @Test
+    void shouldRejectNullReport() {
+        assertThrows(
+                NullPointerException.class,
+                () -> repository.save(null)
+        );
+    }
+
+    @Test
+    void shouldPersistIndependentObservationsAtSamePosition() {
+        Instant timestamp =
+                Instant.parse("2035-11-20T12:00:00Z");
+
+        Report first = saveAt(timestamp);
+        Report second = saveAt(timestamp);
+
+        assertNotEquals(first.id(), second.id());
+
+        entityManager.flush();
+        entityManager.clear();
+
+        Report firstStored = springDataRepository
+                .findById(first.id())
+                .orElseThrow()
+                .toDomain();
+
+        Report secondStored = springDataRepository
+                .findById(second.id())
+                .orElseThrow()
+                .toDomain();
+
+        assertAll(
+                () -> assertEquals(first, firstStored),
+                () -> assertEquals(second, secondStored)
+        );
+    }
+
+    @Test
+    void shouldFilterDateAndDistanceAgainstRealOracle() {
+        Instant today =
+                Instant.parse("2035-11-22T12:00:00Z");
+
+        Report nearby = saveAt(today);
+
+        Report anotherNearby = repository.save(new Report(
+                null,
+                48.8580,
+                2.3500,
+                PlaceType.PLAYGROUND,
+                4,
+                today
+        ));
+
+        Report far = repository.save(new Report(
+                null,
+                49.0000,
+                3.0000,
+                PlaceType.PARK,
+                2,
+                today
+        ));
+
+        Report yesterday = saveAt(
+                Instant.parse("2035-11-21T12:00:00Z")
+        );
+
+        entityManager.flush();
+        entityManager.clear();
+
+        SearchReportsUseCase search = new SearchReportsUseCase(
+                searchPort,
+                Clock.fixed(today, ZoneOffset.UTC)
+        );
+
+        var returnedIds = search
+                .search(48.8566, 2.3522, 10)
+                .stream()
+                .map(Report::id)
+                .toList();
+
+        assertAll(
+                () -> assertTrue(returnedIds.contains(nearby.id())),
+                () -> assertTrue(
+                        returnedIds.contains(anotherNearby.id())
+                ),
+                () -> assertFalse(returnedIds.contains(far.id())),
+                () -> assertFalse(
+                        returnedIds.contains(yesterday.id())
+                )
         );
     }
 
