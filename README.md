@@ -230,6 +230,57 @@ Lors de la soutenance, présenter une création HTTP 201,
 puis une recherche HTTP 200, et comparer les résultats
 avec les données du jour et celles de la veille.
 
+## Démonstration pour l'évaluation (15 minutes)
+
+### Préparation avant la soutenance
+
+1. Démarrer Oracle et l'API avec Docker Compose.
+2. Initialiser le schéma Oracle si nécessaire.
+3. Exécuter `scripts/oracle/demo_reports.sql`.
+4. Vérifier que les services sont opérationnels :
+
+```bash
+sudo docker compose ps
+```
+
+Le jeu de données comprend des signalements du jour et
+de la veille, proches et éloignés de Paris.
+
+### Déroulement
+
+| Durée | Démonstration | Résultat attendu |
+| --- | --- | --- |
+| 0–2 min | Présenter l'architecture Spring / Oracle | Expliquer les composants |
+| 2–5 min | `POST /reports` via `http/demo.http` | HTTP 201, ID et timestamp serveur |
+| 5–9 min | `GET /reports` | HTTP 200, filtrage du jour et du rayon, tableau vide |
+| 9–11 min | Requêtes de `http/validation.http` | HTTP 400 |
+| 11–13 min | Redémarrer uniquement l'API, puis rechercher le signalement créé | Signalement conservé |
+| 13–15 min | Présenter les tests et JaCoCo | 78 tests et seuils de couverture validés |
+
+### Points à expliquer
+
+- Les coordonnées, le type de lieu et l'affluence sont
+  vérifiés avant l'enregistrement.
+- L'identifiant et l'horodatage sont attribués par le serveur.
+- Chaque observation est indépendante, même au même endroit.
+- Les distances sont calculées avec la formule Haversine.
+- La date du jour est déterminée dans le fuseau Europe/Paris.
+- Les données anciennes et les observations hors rayon sont exclues.
+- Les tests d'intégration utilisent une véritable base Oracle.
+
+Le nombre exact de signalements et leurs identifiants
+peuvent varier : ne pas utiliser de valeurs codées en dur
+pour interpréter les résultats de la démonstration.
+
+### Vérification complète
+
+```bash
+sudo docker compose   -f compose.yaml   -f compose.verify.yaml   run --rm verify
+```
+
+La validation complète doit exécuter 78 tests et respecter
+les seuils JaCoCo de 95 % des lignes et des branches.
+
 ## Architecture
 
 - `domain` : modèles métier et invariants.
