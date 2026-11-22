@@ -4,11 +4,11 @@ services:
     working_dir: /workspace
 
     command:
-      - mvn
-      - -B
-      - -ntp
-      - -Dtest=OracleReportRepositoryIT
-      - test
+      - sh
+      - -c
+      - |
+        rm -f /workspace/target/jacoco.exec
+        exec mvn -B -ntp '-Dtest=*Test,*Tests,*IT' -Pfull-coverage verify
 
     environment:
       SPRING_DATASOURCE_URL: jdbc:oracle:thin:@//oracle:1521/FREEPDB1

@@ -150,15 +150,17 @@ Un résultat vide est représenté par `[]`.
 Les paramètres obligatoires manquants, les valeurs invalides
 et les types JSON non conformes entraînent HTTP 400.
 
-## Tests
+## Tests et couverture
 
-Tests unitaires et HTTP :
+La construction de l'image exécute les 67 tests Java
+sans dépendre d'une base Oracle accessible :
 
 ```bash
 sudo docker compose --progress=plain build app
 ```
 
-Tests d'intégration avec Oracle :
+Pour exécuter les 78 tests, dont les tests d'intégration
+avec Oracle, et contrôler la couverture JaCoCo :
 
 ```bash
 sudo docker compose \
@@ -167,8 +169,27 @@ sudo docker compose \
   run --rm verify
 ```
 
+Le profil Maven `full-coverage` impose au minimum :
+
+- 95 % des lignes couvertes ;
+- 95 % des branches couvertes.
+
+Ces seuils concernent la suite complète, avec Oracle.
+Ils ne sont pas appliqués au build Docker autonome.
+
+Le rapport JaCoCo est généré dans le volume Docker
+`verify_target`. Pour consulter les résultats CSV :
+
+```bash
+sudo docker compose \
+  -f compose.yaml \
+  -f compose.verify.yaml \
+  run --rm verify \
+  cat /workspace/target/site/jacoco/jacoco.csv
+```
+
 Les tests d'intégration utilisent de vraies transactions
-Oracle, annulées après chaque test.
+Oracle, annulées à la fin de chaque test.
 
 ## Données de démonstration
 
@@ -194,6 +215,20 @@ Le script évite de réinsérer les mêmes exemples pour
 une date locale identique.
 
 Les données restent conservées après l'exécution.
+
+### Démonstration HTTP
+
+Après avoir initialisé Oracle, chargé les données
+de démonstration et démarré l'API :
+
+- `http/demo.http` : création, recherche et tableau vide.
+- `http/validation.http` : requêtes invalides et réponses 400.
+
+Ces fichiers sont compatibles avec REST Client pour VS Code.
+
+Lors de la soutenance, présenter une création HTTP 201,
+puis une recherche HTTP 200, et comparer les résultats
+avec les données du jour et celles de la veille.
 
 ## Architecture
 
