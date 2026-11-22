@@ -1,0 +1,30 @@
+# Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Maven
+target/
+
+# Java
+*.class
+
+# IDE
+.idea/
+.vscode/
+.settings/
+*.iml
+.classpath
+.project
+
+# Logs
+*.log
+logs/
+
+# System
+.DS_Store
+Thumbs.db

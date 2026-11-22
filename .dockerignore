@@ -1,0 +1,26 @@
+# Version control
+.git/
+
+# Secrets
+.env
+.env.*
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+
+# Generated files
+target/
+*.log
+logs/
+
+# IDE
+.idea/
+.vscode/
+.settings/
+*.iml
+
+# Local configuration
+compose.yaml
+compose.*.yaml
+.DS_Store

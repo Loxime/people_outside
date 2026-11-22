@@ -1,0 +1,44 @@
+services:
+  verify:
+    image: maven:3.9.12-eclipse-temurin-25
+    working_dir: /workspace
+
+    command:
+      - mvn
+      - -B
+      - -ntp
+      - -Dtest=OracleReportRepositoryIT
+      - test
+
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:oracle:thin:@//oracle:1521/FREEPDB1
+      SPRING_DATASOURCE_USERNAME: PO_APP
+      SPRING_DATASOURCE_PASSWORD: ${APP_DB_PASSWORD:?APP_DB_PASSWORD is required}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_JPA_OPEN_IN_VIEW: "false"
+
+    volumes:
+      - ./pom.xml:/workspace/pom.xml:ro
+      - ./src:/workspace/src:ro
+      - verify_target:/workspace/target
+      - verify_m2:/root/.m2
+
+    read_only: true
+
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,size=128m
+
+    security_opt:
+      - no-new-privileges:true
+
+    depends_on:
+      oracle:
+        condition: service_healthy
+
+    networks:
+      - database
+      - frontend
+
+volumes:
+  verify_target:
+  verify_m2:

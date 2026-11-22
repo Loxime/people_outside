@@ -1,0 +1,70 @@
+services:
+  oracle:
+    image: container-registry.oracle.com/database/free:latest-lite
+    restart: unless-stopped
+
+    environment:
+      ORACLE_PWD: ${ORACLE_PASSWORD:?ORACLE_PASSWORD is required}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?APP_DB_PASSWORD is required}
+
+    volumes:
+      - oracle_data:/opt/oracle/oradata
+      - ./scripts/oracle/setup.sh:/opt/oracle/scripts/setup/peopleoutside-setup.sh:ro
+
+    shm_size: "1g"
+    stop_grace_period: 60s
+
+    networks:
+      - database
+
+  app:
+    image: peopleoutside:dev
+
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    restart: unless-stopped
+    init: true
+
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:oracle:thin:@//oracle:1521/FREEPDB1
+      SPRING_DATASOURCE_USERNAME: PO_APP
+      SPRING_DATASOURCE_PASSWORD: ${APP_DB_PASSWORD:?APP_DB_PASSWORD is required}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_JPA_OPEN_IN_VIEW: "false"
+
+
+    depends_on:
+      oracle:
+        condition: service_healthy
+
+    ports:
+      - "127.0.0.1:8080:8080"
+
+    networks:
+      - database
+      - frontend
+
+    read_only: true
+
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,size=64m
+
+    security_opt:
+      - no-new-privileges:true
+
+    cap_drop:
+      - ALL
+
+    pids_limit: 256
+
+volumes:
+  oracle_data:
+
+networks:
+  database:
+    internal: true
+
+  frontend:
+    driver: bridge
