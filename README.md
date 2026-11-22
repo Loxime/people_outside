@@ -275,7 +275,10 @@ pour interpréter les résultats de la démonstration.
 ### Vérification complète
 
 ```bash
-sudo docker compose   -f compose.yaml   -f compose.verify.yaml   run --rm verify
+sudo docker compose \
+  -f compose.yaml \
+  -f compose.verify.yaml \
+  run --rm verify
 ```
 
 La validation complète doit exécuter 78 tests et respecter
